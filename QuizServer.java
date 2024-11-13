@@ -23,16 +23,11 @@ public class QuizServer {
             System.out.println("Quiz Server started on port " + PORT);
 
             while (true) {
-                System.out.println("Waiting for a client to connect...");
-                try (Socket clientSocket = serverSocket.accept();
-                     PrintWriter out = new PrintWriter(clientSocket.getOutputStream(), true);
-                     BufferedReader in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()))) {
+                Socket clientSocket = serverSocket.accept();
+                System.out.println("New client connected: " + clientSocket.getInetAddress());
 
-                    System.out.println("New client connected: " + clientSocket.getInetAddress());
-                    handleClient(in, out);
-                } catch (IOException e) {
-                    System.out.println("Error handling client: " + e.getMessage());
-                }
+                ClientHandler clientHandler = new ClientHandler(clientSocket);
+                new Thread(clientHandler).start();
             }
         } catch (IOException e) {
             System.out.println("Server error: " + e.getMessage());
@@ -47,61 +42,74 @@ public class QuizServer {
         quizList.add(new Quiz("Q5", "A5"));
     }
 
-    private static void handleClient(BufferedReader in, PrintWriter out) throws IOException {
-        int currentQuiz = 0;
-        int score = 0;
+    static class ClientHandler implements Runnable {
+        private Socket clientSocket;
+        private PrintWriter out;
+        private BufferedReader in;
+        private int currentQuiz = 0;
+        private int score = 0;
 
-        sendQuiz(currentQuiz, out);
+        public ClientHandler(Socket socket) {
+            this.clientSocket = socket;
+        }
 
-        String inputLine;
-        while ((inputLine = in.readLine()) != null) {
-            StringTokenizer st = new StringTokenizer(inputLine, ":");
-            if (!st.hasMoreTokens()) {
-                out.println("Protocol violation: Empty message");
-                continue;
-            }
+        @Override
+        public void run() {
+            try {
+                out = new PrintWriter(clientSocket.getOutputStream(), true);
+                in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
 
-            String command = st.nextToken();
-            switch (command) {
-                case "ANSWER":
+                sendQuiz();
 
-                    StringBuilder answer = new StringBuilder();
-                    while (st.hasMoreTokens()) {
-                        answer.append(st.nextToken());
-                        if (st.hasMoreTokens()) {
-                            answer.append(":");
-                        }
+                String inputLine;
+                while ((inputLine = in.readLine()) != null) {
+                    if (inputLine.startsWith("ANSWER:")) {
+                        String answer = inputLine.substring(7);
+                        checkAnswer(answer);
                     }
-
-                    boolean isCorrect = checkAnswer(answer.toString(), currentQuiz);
-                    if (isCorrect) {
-                        score += 10;
+                    else{
+                        out.println("Protocol violation !!");
                     }
-
-                    out.println("RESULT:" + (isCorrect ? "correct" : "wrong") + ":" + score);
-
-                    currentQuiz++;
-                    if (currentQuiz < quizList.size()) {
-                        sendQuiz(currentQuiz, out);
-                    } else {
-                        out.println("FINAL:" + score);
-                        return;
-                    }
-                    break;
-
-                default:
-                    out.println("Protocol violation: Unknown command '" + command + "'");
+                }
+            } catch (IOException e) {
+                System.out.println("Error handling client: " + e.getMessage());
+            } finally {
+                closeConnection();
             }
         }
-    }
 
-    private static void sendQuiz(int quizNumber, PrintWriter out) {
-        Quiz quiz = quizList.get(quizNumber);
-        out.println("QUIZ:" + (quizNumber + 1) + ":" + quiz.question);
-    }
+        private void sendQuiz() {
+            if (currentQuiz < quizList.size()) {
+                Quiz quiz = quizList.get(currentQuiz);
+                out.println("QUIZ:" + (currentQuiz + 1) + ":" + quiz.question);
+            } else {
+                out.println("FINAL:" + score);
+                closeConnection();
+            }
+        }
 
-    private static boolean checkAnswer(String answer, int quizNumber) {
-        Quiz currentQuiz = quizList.get(quizNumber);
-        return answer.trim().equalsIgnoreCase(currentQuiz.answer.trim());
+        private void checkAnswer(String answer) {
+            Quiz currentQuizObj = quizList.get(currentQuiz);
+            boolean isCorrect = answer.trim().equalsIgnoreCase(currentQuizObj.answer.trim());
+
+            if (isCorrect) {
+                score += 10;
+            }
+
+            out.println("RESULT:" + (isCorrect ? "correct" : "wrong") + ":" + score);
+
+            currentQuiz++;
+            sendQuiz();
+        }
+
+        private void closeConnection() {
+            try {
+                if (out != null) out.close();
+                if (in != null) in.close();
+                if (clientSocket != null) clientSocket.close();
+            } catch (IOException e) {
+                System.out.println("Error closing connection: " + e.getMessage());
+            }
+        }
     }
 }
