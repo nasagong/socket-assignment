@@ -4,6 +4,14 @@
 This application implements a text-based protocol for communication between the quiz server and clients. The protocol consists of specific commands, each separated by colons (:), 
 to control the flow of questions, answers, and results.
 
+| **Command**           | **Function**                                                                             | **Format**                                  | **Example**                           |
+|-----------------------|------------------------------------------------------------------------------------------|---------------------------------------------|---------------------------------------|
+| `QUIZ`                | Sends a quiz question from server to client                                              | `QUIZ:<question_number>:<question_content>` | `QUIZ:1:What is the capital of France?` |
+| `ANSWER`              | Sends client’s answer to the current question                                            | `ANSWER:<answer_content>`                   | `ANSWER:Paris`                        |
+| `RESULT`              | Sends the result of the client’s answer (correct or wrong) and the updated score         | `RESULT:<correct_or_wrong>:<current_score>` | `RESULT:correct:10`                   |
+| `FINAL`               | Sends the final score after all questions are answered                                   | `FINAL:<final_score>`                       | `FINAL:50`                            |
+| Protocol Violation    | Notifies the client if an unexpected message format is received                          | `Protocol violation !!`                     | `Protocol violation !!`               |
+
 ## Protocol Commands
 ### Quiz Question
 The server sends a quiz question to the client using the QUIZ command.
