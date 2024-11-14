@@ -51,7 +51,7 @@ If the client sends an unexpected message format, the server responds with a pro
 - Message: Protocol violation !!
 
 ### Protocol Flow Example
-[1] Server sends a question: QUIZ:1:What is the capital of France?
-[2] Client answers: ANSWER:Paris
-[3] Server responds with result and score: RESULT:correct:10
-[4] After all questions, server sends the final score: FINAL:50
+[1] Server sends a question: QUIZ:1:What is the capital of France?   
+[2] Client answers: ANSWER:Paris   
+[3] Server responds with result and score: RESULT:correct:10   
+[4] After all questions, server sends the final score: FINAL:50   
