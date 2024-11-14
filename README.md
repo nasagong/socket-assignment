@@ -1,6 +1,12 @@
+# Socket-Quiz-Game!
 
+![image](https://github.com/user-attachments/assets/59e88490-ec5e-41ec-b4aa-ec2005222633)
 
-# Protocol Specification
+This quiz game has been implemented through Java's socket communication interface. 
+You can pre-store questions and answers on the server, and host a quiz game for multiple users using a single server.
+You will play the quiz game using a special protocol created specifically for this game! Please refer to the protocol wiki below.
+
+## Protocol Specification
 This application implements a text-based protocol for communication between the quiz server and clients. The protocol consists of specific commands, each separated by colons (:), 
 to control the flow of questions, answers, and results.
 
