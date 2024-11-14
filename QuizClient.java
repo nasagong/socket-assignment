@@ -2,12 +2,21 @@ import java.io.*;
 import java.net.*;
 import java.util.Scanner;
 import java.util.StringTokenizer;
-
 public class QuizClient {
-    private static final String SERVER_IP = "127.0.0.1";
-    private static final int SERVER_PORT = 8080;
-
     public static void main(String[] args) {
+        String SERVER_IP;
+        int SERVER_PORT;
+
+        // 클래스패스 사용
+        try (InputStream inputStream = QuizClient.class.getResourceAsStream("/env.dat");
+             BufferedReader br = new BufferedReader(new InputStreamReader(inputStream))) {
+            SERVER_IP = br.readLine().trim();
+            SERVER_PORT = Integer.parseInt(br.readLine().trim());
+        } catch (IOException e) {
+            System.out.println("서버 설정을 불러오는 데 실패했습니다: " + e.getMessage());
+            return;
+        }
+
         try (Socket socket = new Socket(SERVER_IP, SERVER_PORT);
              PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
              BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
@@ -37,9 +46,9 @@ public class QuizClient {
             }
 
         } catch (UnknownHostException e) {
-            System.out.println("Server not found: " + e.getMessage());
+            System.out.println("서버를 찾을 수 없습니다: " + e.getMessage());
         } catch (IOException e) {
-            System.out.println("I/O error: " + e.getMessage());
+            System.out.println("I/O 오류: " + e.getMessage());
         }
     }
 
@@ -54,7 +63,7 @@ public class QuizClient {
             }
         }
 
-        System.out.println("\n뮨제 " + questionNumber + ": " + question.toString());
+        System.out.println("\n문제 " + questionNumber + ": " + question.toString());
         System.out.print("답변을 입력해주세요: ");
         String answer = scanner.nextLine();
         out.println("ANSWER:" + answer);
@@ -65,14 +74,13 @@ public class QuizClient {
         int currentScore = Integer.parseInt(st.nextToken());
 
         System.out.println("결과: " + (isCorrect ? "정답입니다!" : "틀렸습니다!"));
-
         System.out.println("현재 점수: " + currentScore);
     }
 
     private static void getFinal(StringTokenizer st) {
         int finalScore = Integer.parseInt(st.nextToken());
 
-        System.out.println("\n=== !! 퀴즈가 종료됐습니다 !! ===");
+        System.out.println("\n!! 퀴즈가 종료됐습니다 !!");
         System.out.println("최종 점수: " + finalScore);
     }
 }

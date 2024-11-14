@@ -1,10 +1,13 @@
 import java.io.*;
 import java.net.*;
 import java.util.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class QuizServer {
     private static final int PORT = 8080;
     private static final List<Quiz> quizList = new ArrayList<>();
+    private static final int MAX_THREADS = 10;
 
     static class Quiz {
         String question;
@@ -19,6 +22,8 @@ public class QuizServer {
     public static void main(String[] args) {
         initializeQuizzes();
 
+        ExecutorService threadPool = Executors.newFixedThreadPool(MAX_THREADS);
+
         try (ServerSocket serverSocket = new ServerSocket(PORT)) {
             System.out.println("Quiz Server started on port " + PORT);
 
@@ -26,20 +31,26 @@ public class QuizServer {
                 Socket clientSocket = serverSocket.accept();
                 System.out.println("New client connected: " + clientSocket.getInetAddress());
 
-                ClientHandler clientHandler = new ClientHandler(clientSocket);
-                new Thread(clientHandler).start();
+                threadPool.submit(new ClientHandler(clientSocket));
             }
         } catch (IOException e) {
             System.out.println("Server error: " + e.getMessage());
+        } finally {
+            threadPool.shutdown();
         }
     }
 
     private static void initializeQuizzes() {
-        quizList.add(new Quiz("Q1", "A1"));
-        quizList.add(new Quiz("Q2", "A2"));
-        quizList.add(new Quiz("Q3", "A3"));
-        quizList.add(new Quiz("Q4", "A4"));
-        quizList.add(new Quiz("Q5", "A5"));
+//        quizList.add(new Quiz("Q1", "A1"));
+//        quizList.add(new Quiz("Q2", "A2"));
+//        quizList.add(new Quiz("Q3", "A3"));
+//        quizList.add(new Quiz("Q4", "A4"));
+//        quizList.add(new Quiz("Q5", "A5"));
+        quizList.add(new Quiz("몰도바의 수도는?", "키시너우"));
+        quizList.add(new Quiz("부룬디의 수도는?", "기테가"));
+        quizList.add(new Quiz("에리트레아의 수도는?", "아스마라"));
+        quizList.add(new Quiz("투르크메티스탄의 수도는?", "아시가바트"));
+        quizList.add(new Quiz("소말리아의 수도는?", "모가디슈"));
     }
 
     static class ClientHandler implements Runnable {
