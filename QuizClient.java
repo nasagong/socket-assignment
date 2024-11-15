@@ -7,7 +7,7 @@ public class QuizClient {
         String SERVER_IP;
         int SERVER_PORT;
 
-        // 클래스패스 사용
+        // 클래스패스를 통해 env.dat의 연결 정포 파싱
         try (InputStream inputStream = QuizClient.class.getResourceAsStream("/env.dat");
              BufferedReader br = new BufferedReader(new InputStreamReader(inputStream))) {
             SERVER_IP = br.readLine().trim();
@@ -17,7 +17,9 @@ public class QuizClient {
             return;
         }
 
+        // 파일을 통해 읽어낸 데이터를 기반으로 소켓 연결 시작
         try (Socket socket = new Socket(SERVER_IP, SERVER_PORT);
+             // out, in 설정
              PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
              BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
              Scanner scanner = new Scanner(System.in)) {
@@ -27,9 +29,11 @@ public class QuizClient {
 
             String serverMessage;
             while ((serverMessage = in.readLine()) != null) {
+                // StringTokenizer로 서버 메세지의 프로토콜을 분석
                 StringTokenizer st = new StringTokenizer(serverMessage, ":");
                 String command = st.nextToken();
 
+                // switch문을 통해 프로토콜별 메서드 매칭
                 switch (command) {
                     case "QUIZ":
                         getQuiz(st, out, scanner);
@@ -44,7 +48,6 @@ public class QuizClient {
                         return;
                 }
             }
-
         } catch (UnknownHostException e) {
             System.out.println("서버를 찾을 수 없습니다: " + e.getMessage());
         } catch (IOException e) {
@@ -52,6 +55,8 @@ public class QuizClient {
         }
     }
 
+    // Quiz 프로토콜 수신시 실행되는 메서드
+    // 퀴즈 정보를 불러옴
     private static void getQuiz(StringTokenizer st, PrintWriter out, Scanner scanner) {
         String questionNumber = st.nextToken();
 
@@ -69,6 +74,8 @@ public class QuizClient {
         out.println("ANSWER:" + answer);
     }
 
+    // Result 프로토콜 수신시 실행되는 메서드
+    // 정답 여부, 현재 누적 점수 알려줌
     private static void getResult(StringTokenizer st) {
         boolean isCorrect = st.nextToken().equals("correct");
         int currentScore = Integer.parseInt(st.nextToken());
@@ -77,6 +84,8 @@ public class QuizClient {
         System.out.println("현재 점수: " + currentScore);
     }
 
+    // Final 프로토콜 수신시 실행되는 메서드
+    // 최종 점수를 알려줌
     private static void getFinal(StringTokenizer st) {
         int finalScore = Integer.parseInt(st.nextToken());
 
